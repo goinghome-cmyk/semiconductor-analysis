@@ -225,12 +225,13 @@ else:
 
 # ---------------------------------------------------------------- 감사의견
 st.subheader("감사의견")
-client = appdata.dart()
-aud = pd.DataFrame()
-for y in (this_year - 1, this_year - 2):
-    aud = client.audit_opinions(d["corp_code"], y)
-    if not aud.empty:
-        break
+try:
+    aud = appdata.audit(d["corp_code"])
+except DartError:
+    aud = pd.DataFrame()
+# 자회사가 없는 회사(리노공업 등)는 '연결' 줄이 감사인 '-' · 의견 없음으로 비어 있다
+if not aud.empty and "adt_opinion" in aud:
+    aud = aud[aud["adt_opinion"].notna()]
 if aud.empty:
     st.info("감사의견 데이터를 찾지 못했습니다.")
 else:
@@ -239,7 +240,7 @@ else:
               "core_adt_matter": "핵심감사사항"}
     show = aud[[c for c in rename if c in aud.columns]].rename(columns=rename)
     st.dataframe(show, hide_index=True, width="stretch")
-    opinions = " ".join(show.get("감사의견", pd.Series(dtype=str)).astype(str))
+    opinions = " ".join(show.get("감사의견", pd.Series(dtype=str)).dropna().astype(str))
     if any(k in opinions for k in ("한정", "부적정", "거절")):
         st.error("⚠️ 변형의견이 있습니다. '사업·감사보고서' 페이지에서 근거를 확인하세요.")
     else:
