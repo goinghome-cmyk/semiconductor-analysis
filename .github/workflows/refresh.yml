@@ -1,0 +1,45 @@
+# 매주 DART·한국은행 자료를 새로 받아 data/cache 를 저장소에 반영한다.
+# Streamlit Cloud 는 저장소가 바뀌면 앱을 다시 띄우므로, 방문자는 DART 를 새로 부르지 않고 최신 캐시를 본다.
+# 필요한 저장소 비밀: Settings → Secrets and variables → Actions → DART_API_KEY, ECOS_API_KEY
+name: 데이터 갱신
+
+on:
+  schedule:
+    - cron: "0 22 * * 0"   # 매주 월요일 07:00 (한국 시간)
+  workflow_dispatch:        # Actions 탭에서 'Run workflow' 로 바로 실행
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: 자료 받기 (1초 간격 · 일일 상한 · 차단 시 중단)
+        run: python scripts/refresh_data.py
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          DART_DAILY_LIMIT: "500"
+
+      - name: 캐시 커밋
+        if: always()   # 도중에 한도에 걸려도 받은 만큼은 저장
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/cache
+          git diff --cached --quiet || (git commit -m "데이터 갱신 $(date +%F)" && git push)

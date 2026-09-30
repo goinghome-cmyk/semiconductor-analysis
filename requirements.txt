@@ -1,0 +1,10 @@
+streamlit>=1.50
+pandas>=2.2
+numpy
+plotly>=5.20
+requests
+beautifulsoup4
+lxml
+pypdf>=5
+anthropic>=1.0
+finance-datareader

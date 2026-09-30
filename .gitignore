@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+# DART 캐시는 저장소에 함께 올린다: 클라우드 앱이 재시작돼도 DART를 다시 대량 호출하지 않도록.
+# (공개 공시 데이터이며 API 키는 들어있지 않음) 호출 횟수 기록만 제외.
+data/cache/usage_*.json
+data/llm_cache/
+.streamlit/secrets.toml
+# 업로드한 증권사 리포트에서 뽑은 추정치·전망 (저작권 자료 → 저장소에 올리지 않음)
+data/estimates.csv
+data/report_notes.json
+
+# 로컬 개발 설정
+.claude/
